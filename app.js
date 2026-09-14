@@ -121,13 +121,11 @@ document.addEventListener('DOMContentLoaded', () => {
             "Gerencia Técnica": { "1": null, "2": null },
             "Segunda Vicepresidencia Gerencia": { "1": null, "2": null },
             "Vicepresidencia de Administración": { "1": null, "2": null },
-            // --- GERENCIA DE FINANZAS Y SUBDIVISIONES ---
             "Gerencia de Finanzas": { "1": null, "2": null },
             "Departamento de Presupuesto": { "1": null, "2": null },
             "Departamento de Contabilidad": { "1": null, "2": null },
             "Departamento de Pagos y Tributos": { "1": null, "2": null },
             "Unidad de Fideicomiso": { "1": null, "2": null },
-            // --- GERENCIA DE SERVICIOS ADMINISTRATIVOS Y SUBDIVISIONES ---
             "Gerencia de Servicios Administrativos": { "1": null, "2": null },
             "Departamento de Compras y Suministros": { "1": null, "2": null },
             "Departamento de Documentación Correspondencia y Archivo": { "1": null, "2": null },
@@ -142,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
             "División Administrativa": { "1": null, "2": null },
             "División de Técnica de Mantenimiento": { "1": null, "2": null },
             "División de Diseño y Apoyo a Oficinas": { "1": null, "2": null },
-            // --- GERENCIA DE RECURSOS HUMANOS Y SUBDIVISIONES ---
             "Gerencia de Recursos Humanos": { "1": null, "2": null },
             "Oficina de Consultoría y Modelos del Factor Humano": { "1": null, "2": null },
             "Oficina de Asistencia al Personal Ejecutivo": { "1": null, "2": null },
@@ -151,14 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
             "Departamento de Beneficios Socioeconómicos": { "1": null, "2": null },
             "Departamento de Nómina y Egresos": { "1": null, "2": null },
             "Centro de Educación Inicial BCV": { "1": null, "2": null },
-            // --- GERENCIA SUBSEDE MARACAIBO Y SUBDIVISIONES ---
             "Gerencia Subsede Maracaibo": { "1": null, "2": null },
             "Departamento de Operaciones": { "1": null, "2": null },
             "Departamento de Administración": { "1": null, "2": null },
             "Departamento de Relaciones Institucionales": { "1": null, "2": null },
             "Departamento de Recursos Humanos (Subsede Maracaibo)": { "1": null, "2": null },
             "Departamento de Seguridad y Salud en el Trabajo - Subsede Maracaibo": { "1": null, "2": null },
-            // --- GERENCIA DE SEG. Y SALUD EN EL TRABAJO Y SUBDIVISIONES ---
             "Gerencia de Seguridad y Salud en el Trabajo": { "1": null, "2": null },
             "Departamento de Programación y Control de Seg. y Salud en el Trabajo": { "1": null, "2": null },
             "Departamento de Prevención y Promoción de Seg. y Salud en el Trabajo": { "1": null, "2": null },
@@ -327,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- BUSCADOR ---
+    // --- BUSCADOR MEJORADO ---
     searchInput.addEventListener('input', (e) => {
         const text = e.target.value.toLowerCase().trim();
         
