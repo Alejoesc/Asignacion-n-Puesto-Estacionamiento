@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Puestos - BCV</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <header class="bcv-header">
+        <div class="header-content">
+            <div class="logo-container">
+                <svg viewBox="0 0 100 100" class="logo">
+                    <rect x="10" y="20" width="80" height="60" fill="none" stroke="white" stroke-width="4"/>
+                    <path d="M10 20 L50 5 L90 20" fill="none" stroke="var(--bcv-gold)" stroke-width="5"/>
+                    <rect x="25" y="40" width="10" height="40" fill="white"/>
+                    <rect x="45" y="40" width="10" height="40" fill="white"/>
+                    <rect x="65" y="40" width="10" height="40" fill="white"/>
+                </svg>
+                <div class="title-container">
+                    <h1>Banco Central de Venezuela</h1>
+                    <h2>Sistema de Asignación de Puestos</h2>
+                </div>
+            </div>
+            <button id="theme-toggle" class="btn btn-outline" title="Cambiar Tema">🌙 Modo Oscuro</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Buscar personal o puesto...">
+            </div>
+            <div class="toolbar-actions">
+                <button id="btn-add-dir" class="btn btn-blue">+ Nueva Dirección</button>
+                <button id="btn-generar-pdf" class="btn btn-gold">📄 Exportar Reporte PDF</button>
+            </div>
+        </div>
+
+        <section id="dashboard" class="dashboard"></section>
+    </main>
+
+    <!-- Modal Gestión de Puesto -->
+    <div id="modal-gestion" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Gestión de Puesto</h3>
+                <span class="close-btn" id="close-gestion">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="assignment-form">
+                    <input type="hidden" id="modal-direccion">
+                    <input type="hidden" id="modal-puesto">
+                    
+                    <div class="form-group">
+                        <label for="modal-personal">Nombre del Personal:</label>
+                        <input type="text" id="modal-personal" placeholder="Introduce el nombre completo..." autocomplete="off">
+                    </div>
+
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="modal-tipo">Tipo de Asignación:</label>
+                            <select id="modal-tipo">
+                                <option value="Fijo">Fijo</option>
+                                <option value="Temporal">Temporal</option>
+                                <option value="Por Horas">Por Horas</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="group-horas" style="display: none;">
+                            <label for="modal-horas">Cantidad de Horas:</label>
+                            <input type="number" id="modal-horas" min="1" placeholder="Ej. 4">
+                        </div>
+                    </div>
+
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="modal-fecha-inicio">Fecha de Ingreso:</label>
+                            <input type="date" id="modal-fecha-inicio">
+                        </div>
+                        <div class="form-group" id="group-fecha-fin" style="display: none;">
+                            <label for="modal-fecha-fin">Fecha de Culminación:</label>
+                            <input type="date" id="modal-fecha-fin">
+                        </div>
+                    </div>
+                    
+                    <div class="estado-actual" id="estado-actual-text"></div>
+                    
+                    <div class="modal-actions">
+                        <button type="submit" id="btn-asignar" class="btn btn-blue">Guardar Asignación</button>
+                        <button type="button" id="btn-egresar" class="btn btn-danger">Liberar Puesto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Dirección -->
+    <div id="modal-dir" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Agregar Nueva Dirección</h3>
+                <span class="close-btn" id="close-dir">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="dir-form">
+                    <div class="form-group">
+                        <label for="new-dir-name">Nombre de la Dirección/Unidad:</label>
+                        <input type="text" id="new-dir-name" placeholder="Ej. Recursos Humanos" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-blue">Crear Dirección</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
