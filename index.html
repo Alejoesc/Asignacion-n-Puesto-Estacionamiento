@@ -8,87 +8,192 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-    <header class="bcv-header">
-        <div class="header-content">
-            <div class="logo-container">
-                <svg viewBox="0 0 100 100" class="logo">
-                    <rect x="10" y="20" width="80" height="60" fill="none" stroke="white" stroke-width="4"/>
-                    <path d="M10 20 L50 5 L90 20" fill="none" stroke="var(--bcv-gold)" stroke-width="5"/>
-                    <rect x="25" y="40" width="10" height="40" fill="white"/>
-                    <rect x="45" y="40" width="10" height="40" fill="white"/>
-                    <rect x="65" y="40" width="10" height="40" fill="white"/>
-                </svg>
-                <div class="title-container">
-                    <h1>Banco Central de Venezuela</h1>
-                    <h2>Sistema de Asignación de Puestos</h2>
+    <!-- Pantalla de Inicio de Sesión Institucional -->
+    <div id="login-screen" class="login-overlay">
+        <button id="theme-toggle-login" class="btn btn-outline btn-sm floating-theme-btn" title="Alternar Tema">🌙</button>
+        
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-circle">
+                    <svg viewBox="0 0 100 100" class="logo-login">
+                        <rect x="10" y="20" width="80" height="60" fill="none" stroke="#C5A059" stroke-width="4"/>
+                        <path d="M10 20 L50 5 L90 20" fill="none" stroke="#C5A059" stroke-width="5"/>
+                        <rect x="25" y="40" width="10" height="40" fill="#C5A059"/>
+                        <rect x="45" y="40" width="10" height="40" fill="#C5A059"/>
+                        <rect x="65" y="40" width="10" height="40" fill="#C5A059"/>
+                    </svg>
+                </div>
+                <h2>Banco Central de Venezuela</h2>
+                <p>Portal de Gestión de Estacionamiento</p>
+                <hr class="gold-divider">
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="login-label">Credencial de Usuario</label>
+                    <input type="text" id="login-user" placeholder="Ingrese su usuario..." required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label class="login-label">Clave de Acceso</label>
+                    <input type="password" id="login-pass" placeholder="Ingrese su contraseña..." required>
+                </div>
+                <button type="submit" class="btn btn-gold btn-block btn-lg">Acceder al Sistema</button>
+                <div id="login-error" class="error-msg"></div>
+            </form>
+            <div class="login-footer">
+                Uso exclusivo del personal autorizado.
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema Principal -->
+    <div id="main-app" style="display: none;">
+        <header class="bcv-header">
+            <div class="header-top-bar"></div>
+            <div class="header-content">
+                <div class="logo-container">
+                    <svg viewBox="0 0 100 100" class="logo">
+                        <rect x="10" y="20" width="80" height="60" fill="none" stroke="white" stroke-width="4"/>
+                        <path d="M10 20 L50 5 L90 20" fill="none" stroke="#C5A059" stroke-width="5"/>
+                        <rect x="25" y="40" width="10" height="40" fill="white"/>
+                        <rect x="45" y="40" width="10" height="40" fill="white"/>
+                        <rect x="65" y="40" width="10" height="40" fill="white"/>
+                    </svg>
+                    <div class="title-container">
+                        <h1>Banco Central de Venezuela</h1>
+                        <h2>Sistema de Asignación de Puestos</h2>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <span class="user-role-lbl">Usuario Activo:</span>
+                        <span id="user-display" class="user-badge"></span>
+                    </div>
+                    
+                    <div class="notification-wrapper" id="btn-notificaciones" title="Centro de Notificaciones">
+                        <button class="btn btn-icon">🔔</button>
+                        <span class="notif-badge" id="notif-badge" style="display: none;">0</span>
+                    </div>
+
+                    <button id="theme-toggle" class="btn btn-icon" title="Alternar Tema">🌙</button>
+                    <button id="btn-logout" class="btn btn-danger btn-sm">Cerrar Sesión</button>
                 </div>
             </div>
-            <button id="theme-toggle" class="btn btn-outline" title="Cambiar Tema">🌙 Modo Oscuro</button>
-        </div>
-    </header>
+        </header>
 
-    <main>
-        <div class="toolbar">
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="Buscar personal o puesto...">
+        <main class="institutional-main">
+            <div class="toolbar panel-shadow">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Consultar personal o identificador de puesto...">
+                </div>
+                <div class="toolbar-actions">
+                    <button id="btn-movimientos" class="btn btn-outline strict-admin">📊 Auditoría</button>
+                    <button id="btn-users" class="btn btn-outline strict-admin">👥 Cuentas</button>
+                    <button id="btn-add-dir" class="btn btn-blue require-edit">+ Registrar Dirección</button>
+                    <button id="btn-generar-pdf" class="btn btn-gold">📄 Exportar Reporte</button>
+                </div>
             </div>
-            <div class="toolbar-actions">
-                <button id="btn-add-dir" class="btn btn-blue">+ Nueva Dirección</button>
-                <button id="btn-generar-pdf" class="btn btn-gold">📄 Exportar Reporte PDF</button>
+
+            <section id="dashboard" class="dashboard"></section>
+        </main>
+    </div>
+
+    <!-- Modal Centro de Notificaciones -->
+    <div id="modal-notificaciones" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Centro de Notificaciones y Solicitudes</h3>
+                <span class="close-btn" id="close-notificaciones">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="notificaciones-content"></div>
             </div>
         </div>
-
-        <section id="dashboard" class="dashboard"></section>
-    </main>
+    </div>
 
     <!-- Modal Gestión de Puesto -->
     <div id="modal-gestion" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modal-title">Gestión de Puesto</h3>
+                <h3 id="modal-title">Expediente del Puesto</h3>
                 <span class="close-btn" id="close-gestion">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="assignment-form">
                     <input type="hidden" id="modal-direccion">
-                    <input type="hidden" id="modal-puesto">
+                    <input type="hidden" id="modal-puesto-original">
                     
-                    <div class="form-group">
-                        <label for="modal-personal">Nombre del Personal:</label>
-                        <input type="text" id="modal-personal" placeholder="Introduce el nombre completo..." autocomplete="off">
+                    <div class="form-group alert-box" id="aviso-lector"></div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="modal-puesto-num">ID / Número del Puesto:</label>
+                            <input type="text" id="modal-puesto-num" placeholder="Ej. 1, A-1, VIP" required autocomplete="off" class="admin-input form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-personal">Funcionario Asignado:</label>
+                            <input type="text" id="modal-personal" placeholder="Nombre completo..." autocomplete="off" class="admin-input form-control">
+                        </div>
                     </div>
 
-                    <div class="form-group-row">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="modal-tipo">Tipo de Asignación:</label>
-                            <select id="modal-tipo">
-                                <option value="Fijo">Fijo</option>
-                                <option value="Temporal">Temporal</option>
-                                <option value="Por Horas">Por Horas</option>
+                            <label for="modal-tipo">Naturaleza de Asignación:</label>
+                            <select id="modal-tipo" class="admin-input form-control">
+                                <option value="Fijo">Fijo (Permanente)</option>
+                                <option value="Temporal">Temporal (Plazo definido)</option>
+                                <option value="Por Horas">Por Horas (Visitante/Rotativo)</option>
                             </select>
                         </div>
                         <div class="form-group" id="group-horas" style="display: none;">
                             <label for="modal-horas">Cantidad de Horas:</label>
-                            <input type="number" id="modal-horas" min="1" placeholder="Ej. 4">
+                            <input type="number" id="modal-horas" min="1" placeholder="Ej. 4" class="admin-input form-control">
                         </div>
                     </div>
 
-                    <div class="form-group-row">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="modal-fecha-inicio">Fecha de Ingreso:</label>
-                            <input type="date" id="modal-fecha-inicio">
+                            <label for="modal-fecha-inicio">Fecha de Inicio:</label>
+                            <input type="date" id="modal-fecha-inicio" class="admin-input form-control">
                         </div>
                         <div class="form-group" id="group-fecha-fin" style="display: none;">
-                            <label for="modal-fecha-fin">Fecha de Culminación:</label>
-                            <input type="date" id="modal-fecha-fin">
+                            <label for="modal-fecha-fin">Fecha de Vencimiento:</label>
+                            <input type="date" id="modal-fecha-fin" class="admin-input form-control">
                         </div>
                     </div>
                     
                     <div class="estado-actual" id="estado-actual-text"></div>
                     
+                    <div class="modal-actions require-edit">
+                        <button type="submit" id="btn-asignar" class="btn btn-blue">Guardar Registro</button>
+                        <button type="button" id="btn-egresar" class="btn btn-outline-danger">Liberar Espacio</button>
+                        <button type="button" id="btn-eliminar-puesto" class="btn btn-danger-text">Eliminar Puesto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Puesto -->
+    <div id="modal-nuevo-puesto" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Apertura de Nuevo Puesto</h3>
+                <span class="close-btn" id="close-nuevo-puesto">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="form-nuevo-puesto">
+                    <input type="hidden" id="nuevo-puesto-dir">
+                    <div class="form-group">
+                        <label>Unidad/Dirección:</label>
+                        <input type="text" id="nuevo-puesto-dir-display" disabled class="form-control disabled-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="nuevo-puesto-num">Identificador del Puesto:</label>
+                        <input type="text" id="nuevo-puesto-num" placeholder="Ej. 11, B-5..." required class="form-control">
+                    </div>
                     <div class="modal-actions">
-                        <button type="submit" id="btn-asignar" class="btn btn-blue">Guardar Asignación</button>
-                        <button type="button" id="btn-egresar" class="btn btn-danger">Liberar Puesto</button>
+                        <button type="submit" class="btn btn-gold btn-block">Añadir al Sistema</button>
                     </div>
                 </form>
             </div>
@@ -99,19 +204,110 @@
     <div id="modal-dir" class="modal">
         <div class="modal-content modal-sm">
             <div class="modal-header">
-                <h3>Agregar Nueva Dirección</h3>
+                <h3>Registro de Nueva Unidad</h3>
                 <span class="close-btn" id="close-dir">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="dir-form">
                     <div class="form-group">
-                        <label for="new-dir-name">Nombre de la Dirección/Unidad:</label>
-                        <input type="text" id="new-dir-name" placeholder="Ej. Recursos Humanos" required>
+                        <label for="new-dir-name">Nombre Oficial de la Dirección:</label>
+                        <input type="text" id="new-dir-name" placeholder="Ej. Gerencia de RRHH" required class="form-control">
                     </div>
                     <div class="modal-actions">
-                        <button type="submit" class="btn btn-blue">Crear Dirección</button>
+                        <button type="submit" class="btn btn-blue btn-block">Establecer Dirección</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gestión de Usuarios -->
+    <div id="modal-usuarios" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Control de Accesos y Cuentas</h3>
+                <span class="close-btn" id="close-usuarios">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="users-list-container">
+                    <h4 class="section-title">Personal Autorizado</h4>
+                    <ul id="users-list" class="users-list"></ul>
+                </div>
+                <hr class="solid-divider">
+                <form id="form-user">
+                    <h4 class="section-title">Emitir Nueva Credencial</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre de Usuario</label>
+                            <input type="text" id="new-username" placeholder="Usuario..." required class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <input type="password" id="new-password" placeholder="Clave..." required class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nivel de Privilegios</label>
+                        <select id="new-role" class="form-control">
+                            <option value="admin">Administrador (Control Total y Aprobaciones)</option>
+                            <option value="analista">Analista (Agrega datos, solicita borrado)</option>
+                            <option value="lector">Lector (Solo visualización y reportes)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-blue btn-block">Registrar en Sistema</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Auditoría / Movimientos Diarios -->
+    <div id="modal-movimientos" class="modal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>Libro de Auditoría del Sistema</h3>
+                <span class="close-btn" id="close-movimientos">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="toolbar audit-toolbar">
+                    <div class="form-group mb-0">
+                        <label for="filtro-fecha-movimientos" style="margin:0; font-size:0.85rem;">Fecha de Operación:</label>
+                        <input type="date" id="filtro-fecha-movimientos" class="form-control" style="width: auto;">
+                    </div>
+                    <button id="btn-pdf-movimientos" class="btn btn-gold">📄 Descargar Extracto</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="institutional-table">
+                        <thead>
+                            <tr>
+                                <th width="15%">Registro</th>
+                                <th width="20%">Operador</th>
+                                <th width="25%">Clasificación</th>
+                                <th width="40%">Descripción del Evento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-movimientos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Novedad: Sistema de Diálogos Customizados (Alert, Confirm, Prompt) -->
+    <div id="dialog-overlay" class="modal" style="z-index: 10500;">
+        <div class="modal-content modal-sm dialog-card">
+            <div class="dialog-header">
+                <div class="dialog-icon" id="dialog-icon"></div>
+                <h3 id="dialog-title" style="margin: 0; color: var(--text-main); font-size: 1.2rem;"></h3>
+            </div>
+            <div class="modal-body" style="padding-top: 1rem;">
+                <p id="dialog-message" class="dialog-message"></p>
+                <div id="dialog-input-container" style="display: none; margin-top: 15px;">
+                    <input type="password" id="dialog-input" class="form-control" autocomplete="off">
+                </div>
+                <div class="modal-actions dialog-actions">
+                    <button id="btn-dialog-cancel" class="btn btn-outline" style="display: none;">Cancelar</button>
+                    <button id="btn-dialog-ok" class="btn btn-blue">Aceptar</button>
+                </div>
             </div>
         </div>
     </div>
