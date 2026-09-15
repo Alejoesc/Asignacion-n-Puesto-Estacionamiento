@@ -269,7 +269,6 @@ body.role-analista .strict-admin { display: none !important; }
    RESPONSIVIDAD (Móviles y Tablets)
    ========================================= */
 
-/* Tablets y pantallas medianas */
 @media (max-width: 992px) {
     .header-content { flex-direction: column; gap: 15px; padding: 1.2rem; text-align: center; }
     .logo-container { flex-direction: column; justify-content: center; }
@@ -277,7 +276,6 @@ body.role-analista .strict-admin { display: none !important; }
     .user-info { align-items: center; margin-right: 0; width: 100%; margin-bottom: 5px; }
 }
 
-/* Teléfonos estándar */
 @media (max-width: 768px) {
     .form-grid { grid-template-columns: 1fr; gap: 1rem; }
     
@@ -311,7 +309,6 @@ body.role-analista .strict-admin { display: none !important; }
     .dialog-card { width: 90%; }
 }
 
-/* Teléfonos pequeños */
 @media (max-width: 480px) {
     .title-container h1 { font-size: 1.1rem; }
     .title-container h2 { font-size: 0.8rem; }

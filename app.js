@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalMovimientos = document.getElementById('modal-movimientos');
     const modalNotificaciones = document.getElementById('modal-notificaciones');
 
-    // Base de Datos Local - MIGRACIÓN A V9 PARA ORGANIGRAMA COMPLETO CON SUBDIVISIONES
+    // Base de Datos Local
     let asignaciones = JSON.parse(localStorage.getItem('bcvPuestosV9'));
     let sistemaUsuarios = JSON.parse(localStorage.getItem('bcvUsersV2'));
     let registroMovimientos = JSON.parse(localStorage.getItem('bcvMovimientosV1')) || [];
@@ -73,13 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- INICIALIZACIÓN USUARIOS ---
+    // --- INICIALIZACIÓN ---
     if (!sistemaUsuarios) {
         sistemaUsuarios = { "admin": { password: "admin", role: "admin" } };
         localStorage.setItem('bcvUsersV2', JSON.stringify(sistemaUsuarios));
     }
 
-    // --- ORGANIGRAMA COMPLETO BCV (Versión V9 con Subdivisiones) ---
     if (!asignaciones) {
         asignaciones = {
             "Directorio": { "1": null, "2": null },
@@ -269,9 +268,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         userDisplay.textContent = `${currentUser.username} (${roleName})`;
+        
+        // --- LOGICA DEL MODAL DE BIENVENIDA ---
+        if (!sistemaUsuarios[currentUser.username].hasLogged) {
+            document.getElementById('modal-welcome').style.display = 'block';
+            sistemaUsuarios[currentUser.username].hasLogged = true;
+            localStorage.setItem('bcvUsersV2', JSON.stringify(sistemaUsuarios));
+        }
+
         actualizarCampanita();
         renderDashboard();
     }
+
+    // Botón para cerrar el modal de Bienvenida
+    document.getElementById('btn-close-welcome').addEventListener('click', () => {
+        document.getElementById('modal-welcome').style.display = 'none';
+    });
 
     // --- DASHBOARD ---
     function renderDashboard() {
@@ -311,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 puestoDiv.innerHTML = `
                     <div class="estado-indicador"></div>
                     <div class="puesto-numero">${key}</div>
-                    <div class="puesto-nombre">${isOcupado ? data.nombre : '<span style="opacity:0.5;">Libre</span>'}</div>
+                    <div class="puesto-nombre">${isOcupado ? data.nombre : '<span>Libre</span>'}</div>
                     ${tiempoHtml}
                 `;
                 puestoDiv.addEventListener('click', () => abrirModalGestion(direccion, key, data));
@@ -322,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- BUSCADOR MEJORADO ---
+    // --- BUSCADOR ---
     searchInput.addEventListener('input', (e) => {
         const text = e.target.value.toLowerCase().trim();
         
@@ -779,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         registrarMovimiento('Emisión de Credencial', `Registrada nueva cuenta: ${newUser} (Rol: ${newRole})`);
-        sistemaUsuarios[newUser] = { password: newPass, role: newRole };
+        sistemaUsuarios[newUser] = { password: newPass, role: newRole, hasLogged: false };
         localStorage.setItem('bcvUsersV2', JSON.stringify(sistemaUsuarios));
         document.getElementById('form-user').reset();
         renderListaUsuarios();
@@ -795,13 +807,91 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- MANUAL INTELIGENTE PDF ---
+    document.getElementById('btn-manual').addEventListener('click', () => {
+        registrarMovimiento('Descarga de Documento', 'El usuario descargó su Manual del Sistema.');
+        
+        const printDiv = document.createElement('div');
+        printDiv.style.backgroundColor = '#ffffff'; 
+        printDiv.style.padding = '40px';
+        printDiv.style.fontFamily = "'Segoe UI', Helvetica, Arial, sans-serif";
+        printDiv.style.color = '#000000';
+
+        let manualContent = `
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 4px solid #C5A059; padding-bottom: 20px;">
+                <h1 style="color: #002856; margin:0; font-size:28px; text-transform:uppercase;">Banco Central de Venezuela</h1>
+                <h2 style="color: #333333; margin:10px 0; font-size:20px;">Manual de Usuario: Rol ${currentUser.role.toUpperCase()}</h2>
+                <p style="font-size: 12px; color: #555555; margin:0;">Generado el <b>${formatearFecha(obtenerFechaHoy())}</b> para el usuario <b>${currentUser.username}</b></p>
+            </div>
+            
+            <h3 style="color:#002856; border-bottom: 2px solid #eeeeee; padding-bottom:5px;">1. Descripción General</h3>
+            <p style="font-size:12px; line-height:1.6; margin-bottom:20px;">El Sistema de Gestión de Estacionamiento del BCV es una herramienta centralizada para controlar y auditar las plazas asignadas al personal de la institución. Este documento detalla las funciones específicas autorizadas de forma exclusiva para tu nivel de acceso actual.</p>
+
+            <h3 style="color:#002856; border-bottom: 2px solid #eeeeee; padding-bottom:5px;">2. Funcionalidades de tu Rol</h3>
+        `;
+
+        if (currentUser.role === 'admin') {
+            manualContent += `
+            <div style="margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #C5A059;">
+                <h4 style="margin:0 0 10px 0; color:#002856;">A. Administrador (Control Total)</h4>
+                <ul style="font-size:12px; line-height:1.6; padding-left: 20px; margin:0;">
+                    <li><b>Gestión de Usuarios:</b> Puede crear, modificar y revocar el acceso de cualquier usuario.</li>
+                    <li><b>Aprobaciones:</b> Recibe notificaciones (🔔) y es el único con capacidad de aprobar o rechazar las solicitudes enviadas por los analistas.</li>
+                    <li><b>Auditoría:</b> Acceso exclusivo al Libro de Auditoría (Movimientos) del sistema para investigar cambios.</li>
+                    <li><b>Infraestructura:</b> Puede crear nuevas Direcciones/Unidades y forzar la eliminación de registros existentes mediante su clave de seguridad gerencial.</li>
+                    <li><b>Reportes:</b> Exportación del reporte institucional de puestos ocupados en PDF.</li>
+                </ul>
+            </div>`;
+        } else if (currentUser.role === 'analista') {
+            manualContent += `
+            <div style="margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #004080;">
+                <h4 style="margin:0 0 10px 0; color:#002856;">A. Analista (Operador)</h4>
+                <ul style="font-size:12px; line-height:1.6; padding-left: 20px; margin:0;">
+                    <li><b>Asignaciones:</b> Puede asignar puestos libres a nuevos funcionarios, especificando el tipo de asignación (Fijo, Temporal, Por Horas).</li>
+                    <li><b>Apertura de Puestos:</b> Puede crear nuevos números o IDs de puestos dentro de direcciones ya existentes.</li>
+                    <li><b>Restricción de Borrado:</b> <i>No puede eliminar ni liberar puestos o direcciones directamente.</i> Al intentarlo, el sistema enviará una Solicitud formal que los Administradores evaluarán (Aprobar/Rechazar).</li>
+                    <li><b>Notificaciones:</b> Recibirá un aviso en la campanita superior (🔔) cuando su solicitud haya sido respondida por la gerencia.</li>
+                    <li><b>Reportes:</b> Tiene habilitada la opción para descargar el documento general de puestos asignados.</li>
+                </ul>
+            </div>`;
+        } else if (currentUser.role === 'lector') {
+            manualContent += `
+            <div style="margin-bottom: 25px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #94a3b8;">
+                <h4 style="margin:0 0 10px 0; color:#002856;">A. Lector (Solo Visualización)</h4>
+                <ul style="font-size:12px; line-height:1.6; padding-left: 20px; margin:0;">
+                    <li><b>Consultas de Información:</b> Puede buscar, visualizar y explorar todas las direcciones y puestos actuales del sistema.</li>
+                    <li><b>Buscador Inteligente:</b> Herramienta disponible para ubicar rápidamente a un funcionario, unidad o número de puesto usando la barra superior.</li>
+                    <li><b>Reportes:</b> Tiene habilitada la opción de "Exportar Reporte" para generar los PDFs de ocupación general de la institución.</li>
+                    <li><b>Limitaciones de Seguridad:</b> Todos los formularios, campos de texto y botones de edición/eliminación se encuentran bloqueados por defecto para prevenir alteraciones accidentales de la base de datos.</li>
+                </ul>
+            </div>`;
+        }
+
+        manualContent += `
+            <div style="margin-top: 40px; font-size: 10px; text-align: center; color: #555555; border-top: 1px solid #cccccc; padding-top: 10px;">
+                Documento Oficial Institucional. Banco Central de Venezuela.
+            </div>
+        `;
+        
+        printDiv.innerHTML = manualContent;
+
+        const opt = {
+            margin: 10,
+            filename: `Manual_Usuario_${currentUser.role.toUpperCase()}_BCV.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(printDiv).save();
+    });
+
     // --- CERRAR MODALES NORMALES ---
-    const modales = [modalGestion, modalDir, modalUsuarios, modalNuevoPuesto, modalMovimientos, modalNotificaciones];
+    const modales = [modalGestion, modalDir, modalUsuarios, modalNuevoPuesto, modalMovimientos, modalNotificaciones, document.getElementById('modal-welcome')];
     document.querySelectorAll('.close-btn').forEach(btn => {
         btn.onclick = function() { modales.forEach(m => m.style.display = 'none'); }
     });
     window.onclick = (e) => {
-        modales.forEach(m => { if (e.target === m && m.id !== 'dialog-overlay') m.style.display = 'none'; });
+        modales.forEach(m => { if (e.target === m && m.id !== 'dialog-overlay' && m.id !== 'modal-welcome') m.style.display = 'none'; });
     };
 
     function guardarDatos() { localStorage.setItem('bcvPuestosV9', JSON.stringify(asignaciones)); } 
@@ -812,7 +902,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${d}/${m}/${y}`;
     }
 
-    // --- EXPORTAR PDF REPORTES ---
+    // --- EXPORTAR PDF REPORTES DE OCUPACIÓN ---
     document.getElementById('btn-generar-pdf').addEventListener('click', () => {
         registrarMovimiento('Exportación Institucional', 'Generación de reporte maestro de asignaciones');
         const printDiv = document.createElement('div');

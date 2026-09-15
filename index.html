@@ -87,6 +87,7 @@
                     <input type="text" id="search-input" placeholder="Consultar personal o identificador de puesto...">
                 </div>
                 <div class="toolbar-actions">
+                    <button id="btn-manual" class="btn btn-outline" title="Descargar Manual de Instrucciones">📘 Manual</button>
                     <button id="btn-movimientos" class="btn btn-outline strict-admin">📊 Auditoría</button>
                     <button id="btn-users" class="btn btn-outline strict-admin">👥 Cuentas</button>
                     <button id="btn-add-dir" class="btn btn-blue require-edit">+ Registrar Dirección</button>
@@ -309,6 +310,18 @@
                     <button id="btn-dialog-ok" class="btn btn-blue">Aceptar</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal de Bienvenida (Primer Inicio de Sesión) -->
+    <div id="modal-welcome" class="modal" style="z-index: 11000;">
+        <div class="modal-content modal-sm" style="text-align: center; padding: 2rem;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">👋</div>
+            <h2 style="color: var(--text-accent); margin-bottom: 1rem;">¡Bienvenido al Sistema!</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.8rem; line-height: 1.6;">
+                Como es tu primera vez iniciando sesión, te recomendamos descargar el <b>Manual de Usuario</b> haciendo clic en el botón <b>"📘 Manual"</b> en la barra superior. Allí conocerás exactamente las funcionalidades disponibles para tu perfil.
+            </p>
+            <button id="btn-close-welcome" class="btn btn-blue btn-block">Entendido, comenzar a usar</button>
         </div>
     </div>
 
