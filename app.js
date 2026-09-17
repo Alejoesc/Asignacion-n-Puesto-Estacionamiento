@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalMovimientos = document.getElementById('modal-movimientos');
     const modalNotificaciones = document.getElementById('modal-notificaciones');
 
-    // Base de Datos Local - MIGRACIÓN A V12 (Motor Vehicular Opcional Integrado)
+    // Base de Datos Local - MIGRACIÓN A V13 (Motor de Teléfono y Vehículo)
     let bcvDepartamentos = JSON.parse(localStorage.getItem('bcvDepartamentosV10'));
-    let asignaciones = JSON.parse(localStorage.getItem('bcvPuestosV12')); // <--- Nueva BD
+    let asignaciones = JSON.parse(localStorage.getItem('bcvPuestosV13')); // <--- Nueva BD V13
     let sistemaUsuarios = JSON.parse(localStorage.getItem('bcvUsersV2'));
     let registroMovimientos = JSON.parse(localStorage.getItem('bcvMovimientosV1')) || [];
     let solicitudes = JSON.parse(localStorage.getItem('bcvSolicitudesV1')) || [];
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MIGRACIÓN SILENCIOSA DE DATOS VIEJOS ---
     if (!asignaciones) {
-        const oldData = JSON.parse(localStorage.getItem('bcvPuestosV11'));
+        const oldData = JSON.parse(localStorage.getItem('bcvPuestosV12')) || JSON.parse(localStorage.getItem('bcvPuestosV11'));
         if (oldData) {
             asignaciones = oldData;
         } else {
@@ -321,21 +321,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const puestoDiv = document.createElement('div');
             puestoDiv.className = `puesto ${isOcupado ? 'ocupado' : 'disponible'}`;
             
-            // Añadimos marca y placa a la cadena de búsqueda invisible
-            const searchData = `${currentFloor} ${key} ${isOcupado ? data.nombre + ' ' + data.departamento + ' ' + (data.marca||'') + ' ' + (data.placa||'') : 'disponible'}`.toLowerCase();
+            // Añadimos TODOS los datos a la cadena de búsqueda invisible
+            const searchData = `${currentFloor} ${key} ${isOcupado ? data.nombre + ' ' + data.departamento + ' ' + (data.marca||'') + ' ' + (data.placa||'') + ' ' + (data.telefono||'') : 'disponible'}`.toLowerCase();
             puestoDiv.setAttribute('data-search', searchData);
 
             let tiempoHtml = '';
             let vehiculoHtml = '';
+            let telefonoHtml = '';
 
             if (isOcupado) {
                 if (data.tipo === 'Fijo') tiempoHtml = `<div class="puesto-tiempo">Fijo</div>`;
                 else if (data.tipo === 'Temporal') tiempoHtml = `<div class="puesto-tiempo">Temp (al ${formatearFecha(data.fin)})</div>`;
                 else if (data.tipo === 'Por Horas') tiempoHtml = `<div class="puesto-tiempo">${data.horas}h (${formatearFecha(data.inicio)})</div>`;
                 
-                // Muestra la placa discretamente si está registrada
                 if (data.placa) {
-                    vehiculoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">🚗 ${data.placa}</div>`;
+                    vehiculoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; margin-right: 4px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">🚗 ${data.placa}</div>`;
+                }
+
+                if (data.telefono) {
+                    telefonoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">📞 ${data.telefono}</div>`;
                 }
             }
 
@@ -344,7 +348,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="puesto-numero">${key}</div>
                 ${isOcupado ? `<div class="puesto-dept">${data.departamento}</div>` : ''}
                 <div class="puesto-nombre">${isOcupado ? data.nombre : '<span>Libre</span>'}</div>
-                ${vehiculoHtml}
+                <div>
+                    ${vehiculoHtml}
+                    ${telefonoHtml}
+                </div>
                 ${tiempoHtml}
             `;
             puestoDiv.addEventListener('click', () => abrirModalGestion(currentFloor, key, data));
@@ -380,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
             keys.forEach(key => {
                 const data = puestosDelPiso[key];
                 const isOcupado = data !== null;
-                const searchString = `${piso} ${key} ${isOcupado ? data.nombre + ' ' + data.departamento + ' ' + (data.marca||'') + ' ' + (data.placa||'') : 'disponible'}`.toLowerCase();
+                const searchString = `${piso} ${key} ${isOcupado ? data.nombre + ' ' + data.departamento + ' ' + (data.marca||'') + ' ' + (data.placa||'') + ' ' + (data.telefono||'') : 'disponible'}`.toLowerCase();
                 
                 if (searchString.includes(text)) {
                     hasVisiblePuesto = true;
@@ -389,15 +396,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     let tiempoHtml = '';
                     let vehiculoHtml = '';
+                    let telefonoHtml = '';
 
                     if (isOcupado) {
                         if (data.tipo === 'Fijo') tiempoHtml = `<div class="puesto-tiempo">Fijo</div>`;
                         else if (data.tipo === 'Temporal') tiempoHtml = `<div class="puesto-tiempo">Temp (al ${formatearFecha(data.fin)})</div>`;
                         else if (data.tipo === 'Por Horas') tiempoHtml = `<div class="puesto-tiempo">${data.horas}h (${formatearFecha(data.inicio)})</div>`;
                         
-                        if (data.placa) {
-                            vehiculoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">🚗 ${data.placa}</div>`;
-                        }
+                        if (data.placa) vehiculoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; margin-right: 4px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">🚗 ${data.placa}</div>`;
+                        if (data.telefono) telefonoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">📞 ${data.telefono}</div>`;
                     }
 
                     puestoDiv.innerHTML = `
@@ -405,7 +412,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="puesto-numero">${key}</div>
                         ${isOcupado ? `<div class="puesto-dept">${data.departamento}</div>` : ''}
                         <div class="puesto-nombre">${isOcupado ? data.nombre : '<span>Libre</span>'}</div>
-                        ${vehiculoHtml}
+                        <div>
+                            ${vehiculoHtml}
+                            ${telefonoHtml}
+                        </div>
                         ${tiempoHtml}
                     `;
                     puestoDiv.addEventListener('click', () => abrirModalGestion(piso, key, data));
@@ -456,7 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modal-personal').value = isOcupado ? data.nombre : '';
         if(isOcupado && bcvDepartamentos.includes(data.departamento)) depSelect.value = data.departamento;
         
-        // Novedad: Carga de Datos Vehiculares
+        // Carga de Datos Vehiculares y Teléfono
+        document.getElementById('modal-telefono').value = (isOcupado && data.telefono) ? data.telefono : '';
         document.getElementById('modal-vehiculo-marca').value = (isOcupado && data.marca) ? data.marca : '';
         document.getElementById('modal-vehiculo-placa').value = (isOcupado && data.placa) ? data.placa : '';
 
@@ -509,7 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const nom = document.getElementById('modal-personal').value.trim();
         const dept = document.getElementById('modal-dir-select').value;
         
-        // Recolección de Datos Vehiculares
+        // Recolección de Datos Opcionales (Tlf y Vehículo)
+        const tlf = document.getElementById('modal-telefono').value.trim();
         const marca = document.getElementById('modal-vehiculo-marca').value.trim();
         const placa = document.getElementById('modal-vehiculo-placa').value.trim().toUpperCase();
 
@@ -523,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tipo === 'Temporal' && !fin) return await customDialog({ title: 'Faltan Datos', message: 'Requiere fecha de culminación.', icon: '⚠️' });
             if (tipo === 'Por Horas' && !horas) return await customDialog({ title: 'Faltan Datos', message: 'Requiere especificar horas.', icon: '⚠️' });
             
-            puestoData = { nombre: nom, departamento: dept, marca: marca, placa: placa, tipo: tipo, inicio: inicio, fin: fin, horas: horas };
+            puestoData = { nombre: nom, departamento: dept, telefono: tlf, marca: marca, placa: placa, tipo: tipo, inicio: inicio, fin: fin, horas: horas };
         }
 
         asignaciones[piso][id] = puestoData;
@@ -862,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h4 style="margin:0 0 10px 0; color:#002856;">A. Analista (Operador)</h4>
                 <ul style="font-size:12px; line-height:1.6; padding-left: 20px; margin:0;">
                     <li><b>Asignaciones:</b> Puede asignar puestos libres a nuevos funcionarios y adscribirlos a un departamento/dirección existente, especificando el tipo de asignación.</li>
-                    <li><b>Datos del Vehículo:</b> Al asignar un puesto, puede registrar opcionalmente la placa y marca del vehículo.</li>
+                    <li><b>Datos Extra:</b> Al asignar un puesto, puede registrar opcionalmente el teléfono de contacto y los datos del vehículo.</li>
                     <li><b>Apertura de Puestos Extras:</b> Puede crear nuevos números de puestos adicionales en cualquier piso.</li>
                     <li><b>Restricción de Borrado:</b> <i>No puede eliminar ni liberar puestos directamente.</i> Al intentarlo, el sistema enviará una Solicitud formal que los Administradores evaluarán (Aprobar/Rechazar).</li>
                     <li><b>Notificaciones:</b> Recibirá un aviso en la campanita superior (🔔) cuando su solicitud haya sido respondida por la gerencia.</li>
@@ -875,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h4 style="margin:0 0 10px 0; color:#002856;">A. Lector (Solo Visualización)</h4>
                 <ul style="font-size:12px; line-height:1.6; padding-left: 20px; margin:0;">
                     <li><b>Consultas de Información:</b> Puede buscar, visualizar y explorar todos los pisos y puestos actuales del sistema.</li>
-                    <li><b>Buscador Inteligente:</b> Herramienta disponible para ubicar rápidamente a un funcionario, departamento, placa vehicular o identificador de puesto.</li>
+                    <li><b>Buscador Inteligente:</b> Herramienta disponible para ubicar rápidamente a un funcionario, departamento, teléfono, placa vehicular o identificador de puesto.</li>
                     <li><b>Reportes:</b> Tiene habilitada la opción de "Exportar Reporte" para generar los PDFs de ocupación general de la institución.</li>
                     <li><b>Limitaciones de Seguridad:</b> Todos los formularios, campos de texto y botones de edición/eliminación se encuentran bloqueados por defecto para prevenir alteraciones accidentales de la base de datos.</li>
                 </ul>
@@ -909,7 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modales.forEach(m => { if (e.target === m && m.id !== 'dialog-overlay' && m.id !== 'modal-welcome') m.style.display = 'none'; });
     };
 
-    function guardarDatos() { localStorage.setItem('bcvPuestosV12', JSON.stringify(asignaciones)); } 
+    function guardarDatos() { localStorage.setItem('bcvPuestosV13', JSON.stringify(asignaciones)); } 
     function obtenerFechaHoy() { return new Date().toISOString().split('T')[0]; }
     function formatearFecha(fechaStr) {
         if (!fechaStr) return '';
@@ -957,12 +969,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     let vehiculoInfo = '';
                     if (p.marca || p.placa) {
-                        vehiculoInfo = `<br><span style="font-size:9px; color:#002856;">🚗 ${p.marca || 'N/A'} | Placa: ${p.placa || 'N/A'}</span>`;
+                        vehiculoInfo = `<span style="font-size:9px; color:#002856;">🚗 ${p.marca || 'N/A'} | Placa: ${p.placa || 'N/A'}</span><br>`;
+                    }
+
+                    let contactoInfo = '';
+                    if (p.telefono) {
+                        contactoInfo = `<span style="font-size:9px; color:#002856;">📞 Tlf: ${p.telefono}</span><br>`;
                     }
 
                     html += `<tr>
                         <td style="border:1px solid #cccccc; padding:8px 12px; font-weight:bold; color:#000000; text-align:center;">${key}</td>
-                        <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;"><b>${p.nombre}</b><br><span style="font-size:9px; color:#555;">${p.departamento}</span>${vehiculoInfo}</td>
+                        <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;"><b>${p.nombre}</b><br><span style="font-size:9px; color:#555;">${p.departamento}</span><br>${contactoInfo}${vehiculoInfo}</td>
                         <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;">${p.tipo}</td>
                         <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;">${tiempo}</td>
                     </tr>`;

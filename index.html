@@ -84,7 +84,7 @@
             <div class="toolbar panel-shadow">
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="search-input" placeholder="Buscar personal, dirección, puesto o placa...">
+                    <input type="text" id="search-input" placeholder="Buscar personal, dirección, puesto, placa o teléfono...">
                 </div>
                 <div class="toolbar-actions">
                     <button id="btn-manual" class="btn btn-outline" title="Descargar Manual de Instrucciones">📘 Manual</button>
@@ -144,15 +144,21 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="modal-dir-select">Dirección / Departamento Asignado:</label>
-                        <select id="modal-dir-select" class="admin-input form-control">
-                            <!-- Se llena dinámicamente con las direcciones del BCV -->
-                        </select>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="modal-dir-select">Dirección / Departamento:</label>
+                            <select id="modal-dir-select" class="admin-input form-control">
+                                <!-- Se llena dinámicamente con las direcciones del BCV -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-telefono">Teléfono de Contacto (Opcional):</label>
+                            <input type="text" id="modal-telefono" placeholder="Ej. 0414-1234567" autocomplete="off" class="admin-input form-control">
+                        </div>
                     </div>
                     
-                    <!-- NUEVO: Módulo Vehicular (Opcional) -->
-                    <div style="margin-top: 15px; margin-bottom: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
+                    <!-- Módulo Vehicular (Opcional) -->
+                    <div style="margin-top: 10px; margin-bottom: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
                         <h4 style="font-size: 0.9rem; color: var(--bcv-blue); margin-bottom: 10px; text-transform: uppercase;">Datos del Vehículo (Opcional)</h4>
                         <div class="form-grid">
                             <div class="form-group mb-0">
