@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const userDisplay = document.getElementById('user-display');
     const dashboard = document.getElementById('dashboard');
     const searchInput = document.getElementById('search-input');
+    const floorTabsContainer = document.getElementById('floor-tabs');
+    const floorSelectorBox = document.getElementById('floor-selector-container');
     
     // Modales
     const modalGestion = document.getElementById('modal-gestion');
@@ -14,13 +16,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalMovimientos = document.getElementById('modal-movimientos');
     const modalNotificaciones = document.getElementById('modal-notificaciones');
 
-    // Base de Datos Local
-    let asignaciones = JSON.parse(localStorage.getItem('bcvPuestosV9'));
+    // Base de Datos Local - MIGRACIÓN A V12 (Motor Vehicular Opcional Integrado)
+    let bcvDepartamentos = JSON.parse(localStorage.getItem('bcvDepartamentosV10'));
+    let asignaciones = JSON.parse(localStorage.getItem('bcvPuestosV12')); // <--- Nueva BD
     let sistemaUsuarios = JSON.parse(localStorage.getItem('bcvUsersV2'));
     let registroMovimientos = JSON.parse(localStorage.getItem('bcvMovimientosV1')) || [];
     let solicitudes = JSON.parse(localStorage.getItem('bcvSolicitudesV1')) || [];
     let notificaciones = JSON.parse(localStorage.getItem('bcvNotifsV1')) || [];
     let currentUser = null;
+    let currentFloor = 'E1';
+
+    // --- MIGRACIÓN SILENCIOSA DE DATOS VIEJOS ---
+    if (!asignaciones) {
+        const oldData = JSON.parse(localStorage.getItem('bcvPuestosV11'));
+        if (oldData) {
+            asignaciones = oldData;
+        } else {
+            asignaciones = { "E1": {}, "E2": {}, "E3": {}, "E4": {}, "E5": {}, "E6": {} };
+            function pad(n) { return n.toString().padStart(3, '0'); }
+            for(let i=1; i<=30; i++) { asignaciones["E1"][`E1-${pad(i)}`] = null; }
+            for(let i=31; i<=157; i++) { asignaciones["E2"][`E2-${pad(i)}`] = null; }
+            for(let i=158; i<=317; i++) { asignaciones["E3"][`E3-${pad(i)}`] = null; }
+            for(let i=318; i<=488; i++) { asignaciones["E4"][`E4-${pad(i)}`] = null; }
+            for(let i=489; i<=659; i++) { asignaciones["E5"][`E5-${pad(i)}`] = null; }
+            for(let i=660; i<=807; i++) { asignaciones["E6"][`E6-${pad(i)}`] = null; }
+        }
+        guardarDatos();
+    }
 
     // --- SISTEMA DE DIÁLOGOS PERSONALIZADOS ---
     function customDialog({ title, message, type = 'alert', inputType = 'text', icon = 'ℹ️' }) {
@@ -73,93 +95,80 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- INICIALIZACIÓN ---
+    // --- INICIALIZACIÓN DE DATOS ---
     if (!sistemaUsuarios) {
-        sistemaUsuarios = { "admin": { password: "admin", role: "admin" } };
+        sistemaUsuarios = { "admin": { password: "admin", role: "admin", hasLogged: false } };
         localStorage.setItem('bcvUsersV2', JSON.stringify(sistemaUsuarios));
     }
 
-    if (!asignaciones) {
-        asignaciones = {
-            "Directorio": { "1": null, "2": null },
-            "Presidencia": { "1": null, "2": null },
-            "Vicepresidencia de Auditoría Interna": { "1": null, "2": null },
-            "Gerencia de Auditorías": { "1": null, "2": null },
-            "Oficina de Control Fiscal": { "1": null, "2": null },
-            "Gerencia de Seguimiento y Otras Actuaciones de Control": { "1": null, "2": null },
-            "Consultoría Jurídica": { "1": null, "2": null },
-            "Consultoría Jurídica Adjunta p/ Asuntos Estratégicos y de Riesgos": { "1": null, "2": null },
-            "Consultoría Jurídica Adjunta p/ Asuntos Transaccionales": { "1": null, "2": null },
-            "Consultoría Jurídica Adjunta p/ Asuntos de Apoyo a la Gestión": { "1": null, "2": null },
-            "Asesoría de la Presidencia": { "1": null, "2": null },
-            "Oficina de Planificación": { "1": null, "2": null },
-            "Oficina de Cumplimiento": { "1": null, "2": null },
-            "Oficina de Seguimiento y Control del Proceso Kimberley": { "1": null, "2": null },
-            "Gerencia de Comunicaciones Institucionales": { "1": null, "2": null },
-            "Gerencia de Seguridad": { "1": null, "2": null },
-            "Gerencia de Sistemas e Informática": { "1": null, "2": null },
-            "Departamento de Ingeniería de Procesos": { "1": null, "2": null },
-            "Gerencia de Innovación y Tecnologías Aplicadas": { "1": null, "2": null },
-            "Gerencia de Relaciones Internacionales": { "1": null, "2": null },
-            "Primera Vicepresidencia Gerencia": { "1": null, "2": null },
-            "Vicepresidencia de Estudios": { "1": null, "2": null },
-            "Oficina de Investigaciones Económicas": { "1": null, "2": null },
-            "Oficina de Apoyo a la Cooperación y los Estudios": { "1": null, "2": null },
-            "Gerencia de Programación y Análisis Macroeconómico": { "1": null, "2": null },
-            "Gerencia de Estadísticas Económicas": { "1": null, "2": null },
-            "Vicepresidencia de Operaciones Nacionales": { "1": null, "2": null },
-            "Unidad de Análisis del Mercado Financiero": { "1": null, "2": null },
-            "Gerencia de Operaciones Monetarias": { "1": null, "2": null },
-            "Gerencia de Tesorería": { "1": null, "2": null },
-            "Vicepresidencia de Operaciones Internacionales": { "1": null, "2": null },
-            "Oficina de Estudios Internacionales": { "1": null, "2": null },
-            "Gerencia de Adm. de Reservas Internacionales": { "1": null, "2": null },
-            "Gerencia de Obligaciones Internacionales": { "1": null, "2": null },
-            "Gerencia de Operaciones Cambiarias": { "1": null, "2": null },
-            "Gerencia General Casa de la Moneda": { "1": null, "2": null },
-            "Gerencia Técnica": { "1": null, "2": null },
-            "Segunda Vicepresidencia Gerencia": { "1": null, "2": null },
-            "Vicepresidencia de Administración": { "1": null, "2": null },
-            "Gerencia de Finanzas": { "1": null, "2": null },
-            "Departamento de Presupuesto": { "1": null, "2": null },
-            "Departamento de Contabilidad": { "1": null, "2": null },
-            "Departamento de Pagos y Tributos": { "1": null, "2": null },
-            "Unidad de Fideicomiso": { "1": null, "2": null },
-            "Gerencia de Servicios Administrativos": { "1": null, "2": null },
-            "Departamento de Compras y Suministros": { "1": null, "2": null },
-            "Departamento de Documentación Correspondencia y Archivo": { "1": null, "2": null },
-            "División de Asistencia Técnica y Micrografía": { "1": null, "2": null },
-            "División de Correspondencia": { "1": null, "2": null },
-            "División de Archivo Central": { "1": null, "2": null },
-            "Departamento de Otros Servicios": { "1": null, "2": null },
-            "División de Activos y Seguros": { "1": null, "2": null },
-            "División de Comedores": { "1": null, "2": null },
-            "División de Servicios Varios": { "1": null, "2": null },
-            "Departamento de Operación y Mantenimiento Técnico": { "1": null, "2": null },
-            "División Administrativa": { "1": null, "2": null },
-            "División de Técnica de Mantenimiento": { "1": null, "2": null },
-            "División de Diseño y Apoyo a Oficinas": { "1": null, "2": null },
-            "Gerencia de Recursos Humanos": { "1": null, "2": null },
-            "Oficina de Consultoría y Modelos del Factor Humano": { "1": null, "2": null },
-            "Oficina de Asistencia al Personal Ejecutivo": { "1": null, "2": null },
-            "Departamento de Captación y Desarrollo del Factor Humano": { "1": null, "2": null },
-            "Departamento de Relaciones del Factor Humano": { "1": null, "2": null },
-            "Departamento de Beneficios Socioeconómicos": { "1": null, "2": null },
-            "Departamento de Nómina y Egresos": { "1": null, "2": null },
-            "Centro de Educación Inicial BCV": { "1": null, "2": null },
-            "Gerencia Subsede Maracaibo": { "1": null, "2": null },
-            "Departamento de Operaciones": { "1": null, "2": null },
-            "Departamento de Administración": { "1": null, "2": null },
-            "Departamento de Relaciones Institucionales": { "1": null, "2": null },
-            "Departamento de Recursos Humanos (Subsede Maracaibo)": { "1": null, "2": null },
-            "Departamento de Seguridad y Salud en el Trabajo - Subsede Maracaibo": { "1": null, "2": null },
-            "Gerencia de Seguridad y Salud en el Trabajo": { "1": null, "2": null },
-            "Departamento de Programación y Control de Seg. y Salud en el Trabajo": { "1": null, "2": null },
-            "Departamento de Prevención y Promoción de Seg. y Salud en el Trabajo": { "1": null, "2": null },
-            "Departamento de Asistencia Médica y Emergencias": { "1": null, "2": null },
-            "Departamento de Administración del Servicio de Seg. y Salud en el Trabajo": { "1": null, "2": null }
-        };
+    if (!bcvDepartamentos) {
+        bcvDepartamentos = [
+            "Directorio", "Presidencia", "Vicepresidencia de Auditoría Interna", "Gerencia de Auditorías", "Oficina de Control Fiscal", 
+            "Gerencia de Seguimiento y Otras Actuaciones de Control", "Consultoría Jurídica", "Consultoría Jurídica Adjunta p/ Asuntos Estratégicos y de Riesgos", 
+            "Consultoría Jurídica Adjunta p/ Asuntos Transaccionales", "Consultoría Jurídica Adjunta p/ Asuntos de Apoyo a la Gestión", "Asesoría de la Presidencia", 
+            "Oficina de Planificación", "Oficina de Cumplimiento", "Oficina de Seguimiento y Control del Proceso Kimberley", "Gerencia de Comunicaciones Institucionales", 
+            "Gerencia de Seguridad", "Gerencia de Sistemas e Informática", "Departamento de Ingeniería de Procesos", "Gerencia de Innovación y Tecnologías Aplicadas", 
+            "Gerencia de Relaciones Internacionales", "Primera Vicepresidencia Gerencia", "Vicepresidencia de Estudios", "Oficina de Investigaciones Económicas", 
+            "Oficina de Apoyo a la Cooperación y los Estudios", "Gerencia de Programación y Análisis Macroeconómico", "Gerencia de Estadísticas Económicas", 
+            "Vicepresidencia de Operaciones Nacionales", "Unidad de Análisis del Mercado Financiero", "Gerencia de Operaciones Monetarias", "Gerencia de Tesorería", 
+            "Vicepresidencia de Operaciones Internacionales", "Oficina de Estudios Internacionales", "Gerencia de Adm. de Reservas Internacionales", 
+            "Gerencia de Obligaciones Internacionales", "Gerencia de Operaciones Cambiarias", "Gerencia General Casa de la Moneda", "Gerencia Técnica", 
+            "Segunda Vicepresidencia Gerencia", "Vicepresidencia de Administración", "Gerencia de Finanzas", "Departamento de Presupuesto", "Departamento de Contabilidad", 
+            "Departamento de Pagos y Tributos", "Unidad de Fideicomiso", "Gerencia de Servicios Administrativos", "Departamento de Compras y Suministros", 
+            "Departamento de Documentación Correspondencia y Archivo", "División de Asistencia Técnica y Micrografía", "División de Correspondencia", 
+            "División de Archivo Central", "Departamento de Otros Servicios", "División de Activos y Seguros", "División de Comedores", "División de Servicios Varios", 
+            "Departamento de Operación y Mantenimiento Técnico", "División Administrativa", "División de Técnica de Mantenimiento", "División de Diseño y Apoyo a Oficinas", 
+            "Gerencia de Recursos Humanos", "Oficina de Consultoría y Modelos del Factor Humano", "Oficina de Asistencia al Personal Ejecutivo", 
+            "Departamento de Captación y Desarrollo del Factor Humano", "Departamento de Relaciones del Factor Humano", "Departamento de Beneficios Socioeconómicos", 
+            "Departamento de Nómina y Egresos", "Centro de Educación Inicial BCV", "Gerencia Subsede Maracaibo", "Departamento de Operaciones", 
+            "Departamento de Administración", "Departamento de Relaciones Institucionales", "Departamento de Recursos Humanos (Subsede Maracaibo)", 
+            "Departamento de Seguridad y Salud en el Trabajo - Subsede Maracaibo", "Gerencia de Seguridad y Salud en el Trabajo", 
+            "Departamento de Programación y Control de Seg. y Salud en el Trabajo", "Departamento de Prevención y Promoción de Seg. y Salud en el Trabajo", 
+            "Departamento de Asistencia Médica y Emergencias", "Departamento de Administración del Servicio de Seg. y Salud en el Trabajo"
+        ];
+        localStorage.setItem('bcvDepartamentosV10', JSON.stringify(bcvDepartamentos));
+    }
+
+    // =========================================================================
+    // MOTOR DE INTELIGENCIA: REORDENAMIENTO GLOBAL DINÁMICO
+    // =========================================================================
+    function recalcularNumeracion() {
+        let todosLosPuestos = [];
+        const pisosOrder = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
+
+        pisosOrder.forEach(piso => {
+            if(!asignaciones[piso]) return;
+            const keys = Object.keys(asignaciones[piso]).sort((a, b) => {
+                const numA = parseInt(a.split('-')[1] || 0, 10);
+                const numB = parseInt(b.split('-')[1] || 0, 10);
+                return numA - numB;
+            });
+            keys.forEach(key => {
+                todosLosPuestos.push({ piso: piso, oldKey: key, data: asignaciones[piso][key] });
+            });
+        });
+
+        let nuevasAsignaciones = { "E1": {}, "E2": {}, "E3": {}, "E4": {}, "E5": {}, "E6": {} };
+        let mapaCambios = {}; 
+        let contadorGlobal = 1;
+
+        todosLosPuestos.forEach(puesto => {
+            const numeroFormateado = contadorGlobal.toString().padStart(3, '0');
+            const nuevaKey = `${puesto.piso}-${numeroFormateado}`;
+            nuevasAsignaciones[puesto.piso][nuevaKey] = puesto.data;
+            mapaCambios[puesto.oldKey] = nuevaKey;
+            contadorGlobal++;
+        });
+
+        asignaciones = nuevasAsignaciones;
         guardarDatos();
+
+        solicitudes.forEach(sol => {
+            if (sol.estado === 'pendiente' && sol.puesto && mapaCambios[sol.puesto]) {
+                sol.puesto = mapaCambios[sol.puesto]; 
+            }
+        });
+        localStorage.setItem('bcvSolicitudesV1', JSON.stringify(solicitudes));
     }
 
     // --- FUNCIONES CORE ---
@@ -180,22 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarCampanita() {
         if (!currentUser) return;
         let sinLeer = 0;
-        
-        if (currentUser.role === 'admin') {
-            const pendientes = solicitudes.filter(s => s.estado === 'pendiente').length;
-            sinLeer += pendientes;
-        }
-        
-        const misNoLeidas = notificaciones.filter(n => n.to === currentUser.username && !n.leida).length;
-        sinLeer += misNoLeidas;
-        
+        if (currentUser.role === 'admin') sinLeer += solicitudes.filter(s => s.estado === 'pendiente').length;
+        sinLeer += notificaciones.filter(n => n.to === currentUser.username && !n.leida).length;
         const badge = document.getElementById('notif-badge');
-        if (sinLeer > 0) {
-            badge.style.display = 'block';
-            badge.textContent = sinLeer;
-        } else {
-            badge.style.display = 'none';
-        }
+        badge.style.display = sinLeer > 0 ? 'block' : 'none';
+        badge.textContent = sinLeer;
     }
 
     // --- TEMA CLARO/OSCURO ---
@@ -269,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         userDisplay.textContent = `${currentUser.username} (${roleName})`;
         
-        // --- LOGICA DEL MODAL DE BIENVENIDA ---
         if (!sistemaUsuarios[currentUser.username].hasLogged) {
             document.getElementById('modal-welcome').style.display = 'block';
             sistemaUsuarios[currentUser.username].hasLogged = true;
@@ -277,182 +274,192 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         actualizarCampanita();
+        renderTabs();
         renderDashboard();
     }
 
-    // Botón para cerrar el modal de Bienvenida
-    document.getElementById('btn-close-welcome').addEventListener('click', () => {
-        document.getElementById('modal-welcome').style.display = 'none';
-    });
+    document.getElementById('btn-close-welcome').addEventListener('click', () => { document.getElementById('modal-welcome').style.display = 'none'; });
 
-    // --- DASHBOARD ---
-    function renderDashboard() {
-        dashboard.innerHTML = '';
-        for (const [direccion, puestos] of Object.entries(asignaciones)) {
-            const card = document.createElement('div');
-            card.className = 'direccion-card';
-            card.innerHTML = `
-                <div class="dir-header">
-                    <h3>${direccion}</h3>
-                    <div class="dir-actions">
-                        <button class="btn btn-sm btn-gold require-edit" onclick="window.abrirModalNuevoPuesto('${direccion}')">+ Añadir Puesto</button>
-                        <button class="btn btn-sm btn-outline-danger require-edit" onclick="window.eliminarDireccion('${direccion}')" title="Eliminar Dirección">Eliminar Unidad</button>
-                    </div>
-                </div>
-            `;
-
-            const grid = document.createElement('div');
-            grid.className = 'puestos-grid';
-            const keys = Object.keys(puestos).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-
-            for (const key of keys) {
-                const data = puestos[key];
-                const isOcupado = data !== null;
-                const puestoDiv = document.createElement('div');
-                puestoDiv.className = `puesto ${isOcupado ? 'ocupado' : 'disponible'}`;
-                
-                puestoDiv.setAttribute('data-search', `${direccion} ${key} ${isOcupado ? data.nombre : 'disponible'}`.toLowerCase());
-
-                let tiempoHtml = '';
-                if (isOcupado) {
-                    if (data.tipo === 'Fijo') tiempoHtml = `<div class="puesto-tiempo">Fijo</div>`;
-                    else if (data.tipo === 'Temporal') tiempoHtml = `<div class="puesto-tiempo">Temp (al ${formatearFecha(data.fin)})</div>`;
-                    else if (data.tipo === 'Por Horas') tiempoHtml = `<div class="puesto-tiempo">${data.horas}h (${formatearFecha(data.inicio)})</div>`;
-                }
-
-                puestoDiv.innerHTML = `
-                    <div class="estado-indicador"></div>
-                    <div class="puesto-numero">${key}</div>
-                    <div class="puesto-nombre">${isOcupado ? data.nombre : '<span>Libre</span>'}</div>
-                    ${tiempoHtml}
-                `;
-                puestoDiv.addEventListener('click', () => abrirModalGestion(direccion, key, data));
-                grid.appendChild(puestoDiv);
-            }
-            card.appendChild(grid);
-            dashboard.appendChild(card);
-        }
+    // --- RENDERIZADO POR PISOS ---
+    function renderTabs() {
+        floorTabsContainer.innerHTML = '';
+        Object.keys(asignaciones).forEach(piso => {
+            const btn = document.createElement('button');
+            btn.className = `floor-tab ${piso === currentFloor ? 'active' : ''}`;
+            btn.textContent = `Piso ${piso}`;
+            btn.onclick = () => {
+                currentFloor = piso;
+                renderTabs();
+                renderDashboard();
+            };
+            floorTabsContainer.appendChild(btn);
+        });
     }
 
-    // --- BUSCADOR ---
+    function renderDashboard() {
+        dashboard.innerHTML = '';
+        const card = document.createElement('div');
+        card.className = 'direccion-card';
+        card.innerHTML = `
+            <div class="dir-header">
+                <h3>VISTA GENERAL - PISO ${currentFloor}</h3>
+                <div class="dir-actions">
+                    <button class="btn btn-sm btn-gold require-edit" onclick="window.abrirModalNuevoPuesto('${currentFloor}')">+ Añadir Puesto Extra</button>
+                </div>
+            </div>
+        `;
+
+        const grid = document.createElement('div');
+        grid.className = 'puestos-grid';
+        
+        const puestosDelPiso = asignaciones[currentFloor];
+        const keys = Object.keys(puestosDelPiso).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+
+        for (const key of keys) {
+            const data = puestosDelPiso[key];
+            const isOcupado = data !== null;
+            const puestoDiv = document.createElement('div');
+            puestoDiv.className = `puesto ${isOcupado ? 'ocupado' : 'disponible'}`;
+            
+            // Añadimos marca y placa a la cadena de búsqueda invisible
+            const searchData = `${currentFloor} ${key} ${isOcupado ? data.nombre + ' ' + data.departamento + ' ' + (data.marca||'') + ' ' + (data.placa||'') : 'disponible'}`.toLowerCase();
+            puestoDiv.setAttribute('data-search', searchData);
+
+            let tiempoHtml = '';
+            let vehiculoHtml = '';
+
+            if (isOcupado) {
+                if (data.tipo === 'Fijo') tiempoHtml = `<div class="puesto-tiempo">Fijo</div>`;
+                else if (data.tipo === 'Temporal') tiempoHtml = `<div class="puesto-tiempo">Temp (al ${formatearFecha(data.fin)})</div>`;
+                else if (data.tipo === 'Por Horas') tiempoHtml = `<div class="puesto-tiempo">${data.horas}h (${formatearFecha(data.inicio)})</div>`;
+                
+                // Muestra la placa discretamente si está registrada
+                if (data.placa) {
+                    vehiculoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">🚗 ${data.placa}</div>`;
+                }
+            }
+
+            puestoDiv.innerHTML = `
+                <div class="estado-indicador"></div>
+                <div class="puesto-numero">${key}</div>
+                ${isOcupado ? `<div class="puesto-dept">${data.departamento}</div>` : ''}
+                <div class="puesto-nombre">${isOcupado ? data.nombre : '<span>Libre</span>'}</div>
+                ${vehiculoHtml}
+                ${tiempoHtml}
+            `;
+            puestoDiv.addEventListener('click', () => abrirModalGestion(currentFloor, key, data));
+            grid.appendChild(puestoDiv);
+        }
+        card.appendChild(grid);
+        dashboard.appendChild(card);
+    }
+
+    // --- BUSCADOR MULTI-PISO ---
     searchInput.addEventListener('input', (e) => {
         const text = e.target.value.toLowerCase().trim();
-        
-        document.querySelectorAll('.direccion-card').forEach(card => {
-            let hasVisiblePuesto = false;
-            const puestos = card.querySelectorAll('.puesto');
-            const dirNameMatch = card.querySelector('h3').textContent.toLowerCase().includes(text);
+        if (text === '') {
+            floorSelectorBox.style.display = 'block';
+            renderDashboard();
+            return;
+        }
 
-            puestos.forEach(puesto => {
-                const match = puesto.getAttribute('data-search').includes(text);
-                if (match) {
-                    puesto.style.display = 'flex';
+        floorSelectorBox.style.display = 'none';
+        dashboard.innerHTML = '';
+
+        Object.keys(asignaciones).forEach(piso => {
+            const card = document.createElement('div');
+            card.className = 'direccion-card';
+            card.innerHTML = `<div class="dir-header"><h3>Resultados en Piso ${piso}</h3></div>`;
+            const grid = document.createElement('div');
+            grid.className = 'puestos-grid';
+            
+            let hasVisiblePuesto = false;
+            const puestosDelPiso = asignaciones[piso];
+            const keys = Object.keys(puestosDelPiso).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+
+            keys.forEach(key => {
+                const data = puestosDelPiso[key];
+                const isOcupado = data !== null;
+                const searchString = `${piso} ${key} ${isOcupado ? data.nombre + ' ' + data.departamento + ' ' + (data.marca||'') + ' ' + (data.placa||'') : 'disponible'}`.toLowerCase();
+                
+                if (searchString.includes(text)) {
                     hasVisiblePuesto = true;
-                } else {
-                    puesto.style.display = 'none';
+                    const puestoDiv = document.createElement('div');
+                    puestoDiv.className = `puesto ${isOcupado ? 'ocupado' : 'disponible'}`;
+                    
+                    let tiempoHtml = '';
+                    let vehiculoHtml = '';
+
+                    if (isOcupado) {
+                        if (data.tipo === 'Fijo') tiempoHtml = `<div class="puesto-tiempo">Fijo</div>`;
+                        else if (data.tipo === 'Temporal') tiempoHtml = `<div class="puesto-tiempo">Temp (al ${formatearFecha(data.fin)})</div>`;
+                        else if (data.tipo === 'Por Horas') tiempoHtml = `<div class="puesto-tiempo">${data.horas}h (${formatearFecha(data.inicio)})</div>`;
+                        
+                        if (data.placa) {
+                            vehiculoHtml = `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-weight: bold; background: var(--bg-body); padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-block;">🚗 ${data.placa}</div>`;
+                        }
+                    }
+
+                    puestoDiv.innerHTML = `
+                        <div class="estado-indicador"></div>
+                        <div class="puesto-numero">${key}</div>
+                        ${isOcupado ? `<div class="puesto-dept">${data.departamento}</div>` : ''}
+                        <div class="puesto-nombre">${isOcupado ? data.nombre : '<span>Libre</span>'}</div>
+                        ${vehiculoHtml}
+                        ${tiempoHtml}
+                    `;
+                    puestoDiv.addEventListener('click', () => abrirModalGestion(piso, key, data));
+                    grid.appendChild(puestoDiv);
                 }
             });
 
-            if (hasVisiblePuesto || dirNameMatch) {
-                card.style.display = 'block';
-                if (dirNameMatch) {
-                    puestos.forEach(p => p.style.display = 'flex');
-                }
-            } else {
-                card.style.display = 'none'; 
+            if (hasVisiblePuesto) {
+                card.appendChild(grid);
+                dashboard.appendChild(card);
             }
         });
     });
 
     // --- CREAR SOLICITUDES (Analistas) ---
-    async function crearSolicitud(tipoAccion, dir, id) {
+    async function crearSolicitud(tipoAccion, piso, id) {
         const existePendiente = solicitudes.some(s => 
-            s.estado === 'pendiente' && s.tipo === tipoAccion && s.dir === dir && s.puesto === id
+            s.estado === 'pendiente' && s.tipo === tipoAccion && s.puesto === id
         );
 
         if (existePendiente) {
-            await customDialog({
-                title: 'Acción Denegada',
-                message: `Ya existe una solicitud en proceso para realizar esta misma acción en ${id ? 'este puesto' : 'esta dirección'}.\n\nEspera a que un administrador apruebe o rechace la solicitud anterior.`,
-                icon: '⛔'
-            });
+            await customDialog({ title: 'Acción Denegada', message: `Ya existe una solicitud en proceso para el puesto ${id}.`, icon: '⛔' });
             return;
         }
 
-        solicitudes.push({ id: Date.now(), tipo: tipoAccion, dir: dir, puesto: id, analista: currentUser.username, estado: 'pendiente' });
+        solicitudes.push({ id: Date.now(), tipo: tipoAccion, dir: piso, puesto: id, analista: currentUser.username, estado: 'pendiente' });
         localStorage.setItem('bcvSolicitudesV1', JSON.stringify(solicitudes));
         
-        let detalleAuditoria = `El analista solicitó ${tipoAccion.replace('_', ' ')} en la unidad "${dir}"`;
-        if (id) detalleAuditoria += ` (Identificador de puesto: ${id})`;
-        registrarMovimiento('Emisión de Solicitud', detalleAuditoria);
-
+        registrarMovimiento('Emisión de Solicitud', `El analista solicitó ${tipoAccion.replace('_', ' ')} en el puesto ${id}`);
         Object.keys(sistemaUsuarios).forEach(u => {
-            if(sistemaUsuarios[u].role === 'admin') {
-                enviarNotificacion(u, `⚠️ El analista <b>${currentUser.username}</b> ha solicitado <b>${tipoAccion.replace('_', ' ')}</b> en la dirección ${dir}.`);
-            }
+            if(sistemaUsuarios[u].role === 'admin') enviarNotificacion(u, `⚠️ Solicitud de <b>${tipoAccion.replace('_', ' ')}</b> en el puesto ${id} por ${currentUser.username}.`);
         });
 
-        await customDialog({ title: 'Solicitud Enviada', message: 'Tu petición ha sido enviada a los administradores para su revisión y aprobación.', icon: '✅' });
+        await customDialog({ title: 'Solicitud Enviada', message: 'Tu petición ha sido enviada a los administradores.', icon: '✅' });
     }
 
-    // --- GESTIÓN DE DIRECCIONES ---
-    window.eliminarDireccion = async function(direccion) {
-        if (currentUser.role === 'lector') return;
-        
-        if (currentUser.role === 'analista') {
-            const conf = await customDialog({
-                type: 'confirm', title: 'Permiso Requerido', icon: '🔒',
-                message: `Al ser Analista, no puedes eliminar direcciones directamente.\n\n¿Deseas enviar una SOLICITUD AL ADMINISTRADOR para eliminar la unidad "${direccion}"?`
-            });
-            if (conf) await crearSolicitud('eliminar_direccion', direccion, null);
-            return;
-        }
-        
-        const puestos = asignaciones[direccion];
-        const ocupados = Object.values(puestos).filter(p => p !== null).length;
-        
-        if (ocupados > 0) {
-            await customDialog({
-                title: 'Sistema Bloqueado', icon: '⚠️',
-                message: `La dirección "${direccion}" tiene ${ocupados} puesto(s) asignado(s).\nEl sistema impide eliminar unidades con personal registrado.`
-            });
-            
-            const passPrompt = await customDialog({
-                type: 'prompt', inputType: 'password', title: 'Autorización Gerencial', icon: '🔐',
-                message: `Para FORZAR la eliminación de "${direccion}", ingrese su clave de administrador:`
-            });
-            
-            if (passPrompt === null) return;
-            if (passPrompt === sistemaUsuarios[currentUser.username].password) {
-                delete asignaciones[direccion];
-                registrarMovimiento('Eliminación Forzada', `Eliminada la dirección "${direccion}" con ${ocupados} puestos ocupados.`);
-                guardarDatos(); renderDashboard();
-                await customDialog({ title: 'Operación Exitosa', message: 'Dirección eliminada del sistema.', icon: '✅' });
-            } else {
-                await customDialog({ title: 'Error de Autenticación', message: 'Credencial incorrecta. Operación denegada.', icon: '❌' });
-            }
-        } else {
-            const conf = await customDialog({
-                type: 'confirm', title: 'Confirmación', icon: '🗑️',
-                message: `¿Confirma la eliminación definitiva de la unidad vacía:\n"${direccion}"?`
-            });
-            if (conf) {
-                delete asignaciones[direccion];
-                registrarMovimiento('Eliminación de Dirección', `Eliminada dirección vacía: "${direccion}"`);
-                guardarDatos(); renderDashboard();
-            }
-        }
-    };
-
     // --- GESTIÓN DE PUESTOS ---
-    function abrirModalGestion(direccion, idPuesto, data) {
-        document.getElementById('modal-title').textContent = `${direccion} - Expediente`;
-        document.getElementById('modal-direccion').value = direccion;
+    function abrirModalGestion(piso, idPuesto, data) {
+        document.getElementById('modal-title').textContent = `Expediente - ${idPuesto}`;
+        document.getElementById('modal-piso-actual').value = piso;
         document.getElementById('modal-puesto-original').value = idPuesto;
         document.getElementById('modal-puesto-num').value = idPuesto;
         
+        const depSelect = document.getElementById('modal-dir-select');
+        depSelect.innerHTML = bcvDepartamentos.map(d => `<option value="${d}">${d}</option>`).join('');
+
         const isOcupado = data !== null;
         document.getElementById('modal-personal').value = isOcupado ? data.nombre : '';
+        if(isOcupado && bcvDepartamentos.includes(data.departamento)) depSelect.value = data.departamento;
+        
+        // Novedad: Carga de Datos Vehiculares
+        document.getElementById('modal-vehiculo-marca').value = (isOcupado && data.marca) ? data.marca : '';
+        document.getElementById('modal-vehiculo-placa').value = (isOcupado && data.placa) ? data.placa : '';
+
         document.getElementById('modal-tipo').value = isOcupado ? data.tipo : 'Fijo';
         document.getElementById('modal-horas').value = (isOcupado && data.tipo === 'Por Horas') ? data.horas : '';
         document.getElementById('modal-fecha-inicio').value = isOcupado ? data.inicio : obtenerFechaHoy();
@@ -466,10 +473,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentUser.role === 'analista') {
             btnEgresar.textContent = "Solicitar Liberación";
-            btnEliminar.textContent = "Solicitar Eliminación";
+            if (btnEliminar) btnEliminar.textContent = "Solicitar Eliminación Física";
         } else {
             btnEgresar.textContent = "Liberar Espacio";
-            btnEliminar.textContent = "Eliminar Puesto";
+            if (btnEliminar) btnEliminar.textContent = "Eliminar Puesto Física";
         }
 
         if (isOcupado) {
@@ -496,32 +503,33 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (currentUser.role === 'lector') return;
 
-        const dir = document.getElementById('modal-direccion').value;
-        const oldId = document.getElementById('modal-puesto-original').value;
-        const newId = document.getElementById('modal-puesto-num').value.trim().toUpperCase();
+        const piso = document.getElementById('modal-piso-actual').value;
+        const id = document.getElementById('modal-puesto-original').value;
         
         const nom = document.getElementById('modal-personal').value.trim();
+        const dept = document.getElementById('modal-dir-select').value;
+        
+        // Recolección de Datos Vehiculares
+        const marca = document.getElementById('modal-vehiculo-marca').value.trim();
+        const placa = document.getElementById('modal-vehiculo-placa').value.trim().toUpperCase();
+
         const tipo = document.getElementById('modal-tipo').value;
         const horas = document.getElementById('modal-horas').value;
         const inicio = document.getElementById('modal-fecha-inicio').value;
         const fin = document.getElementById('modal-fecha-fin').value;
 
-        if (!newId) return await customDialog({ title: 'Validación', message: 'El identificador del puesto es obligatorio.', icon: '⚠️' });
-        if (oldId !== newId && asignaciones[dir][newId] !== undefined) return await customDialog({ title: 'Validación', message: `El identificador "${newId}" ya existe en la unidad.`, icon: '⚠️' });
-
         let puestoData = null;
         if (nom) {
             if (tipo === 'Temporal' && !fin) return await customDialog({ title: 'Faltan Datos', message: 'Requiere fecha de culminación.', icon: '⚠️' });
             if (tipo === 'Por Horas' && !horas) return await customDialog({ title: 'Faltan Datos', message: 'Requiere especificar horas.', icon: '⚠️' });
-            puestoData = { nombre: nom, tipo, inicio, fin, horas };
+            
+            puestoData = { nombre: nom, departamento: dept, marca: marca, placa: placa, tipo: tipo, inicio: inicio, fin: fin, horas: horas };
         }
 
-        if (oldId !== newId) delete asignaciones[dir][oldId];
-        asignaciones[dir][newId] = puestoData;
+        asignaciones[piso][id] = puestoData;
 
-        if (nom) registrarMovimiento('Asignación', `Puesto ${newId} (${dir}) asignado a ${nom} por ${currentUser.username}`);
-        else if (oldId !== newId) registrarMovimiento('Renombre', `Puesto ${oldId} -> ${newId} en ${dir}`);
-
+        if (nom) registrarMovimiento('Asignación', `Puesto ${id} asignado a ${nom} (${dept})`);
+        
         guardarDatos();
         modalGestion.style.display = 'none';
         renderDashboard();
@@ -529,73 +537,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-egresar').addEventListener('click', async () => {
         if (currentUser.role === 'lector') return;
-        const dir = document.getElementById('modal-direccion').value;
+        const piso = document.getElementById('modal-piso-actual').value;
         const id = document.getElementById('modal-puesto-original').value;
         
         if (currentUser.role === 'analista') {
             const conf = await customDialog({ type: 'confirm', title: 'Solicitud', message: '¿Solicitar al administrador la LIBERACIÓN de este puesto?', icon: '🛡️' });
-            if(conf) { await crearSolicitud('liberar_puesto', dir, id); modalGestion.style.display = 'none'; }
+            if(conf) { await crearSolicitud('liberar_puesto', piso, id); modalGestion.style.display = 'none'; }
             return;
         }
         
         const conf = await customDialog({ type: 'confirm', title: 'Liberar', message: '¿Proceder a liberar el puesto y retirar al funcionario?', icon: '🔓' });
         if (conf) {
-            registrarMovimiento('Liberación', `Puesto ${id} (${dir}) liberado.`);
-            asignaciones[dir][id] = null;
+            registrarMovimiento('Liberación', `Puesto ${id} liberado.`);
+            asignaciones[piso][id] = null;
             guardarDatos(); modalGestion.style.display = 'none'; renderDashboard();
         }
     });
 
-    document.getElementById('btn-eliminar-puesto').addEventListener('click', async () => {
-        if (currentUser.role === 'lector') return;
-        const dir = document.getElementById('modal-direccion').value;
-        const id = document.getElementById('modal-puesto-original').value;
-        
-        if (currentUser.role === 'analista') {
-            const conf = await customDialog({ type: 'confirm', title: 'Solicitud', message: '¿Solicitar al administrador la ELIMINACIÓN de este espacio?', icon: '🛡️' });
-            if(conf) { await crearSolicitud('eliminar_puesto', dir, id); modalGestion.style.display = 'none'; }
-            return;
-        }
+    const btnEliminar = document.getElementById('btn-eliminar-puesto');
+    if (btnEliminar) {
+        btnEliminar.addEventListener('click', async () => {
+            if (currentUser.role === 'lector') return;
+            const piso = document.getElementById('modal-piso-actual').value;
+            const id = document.getElementById('modal-puesto-original').value;
+            
+            if (currentUser.role === 'analista') {
+                const conf = await customDialog({ type: 'confirm', title: 'Solicitud', message: '¿Solicitar la ELIMINACIÓN FÍSICA de este espacio del sistema?', icon: '🛡️' });
+                if(conf) { await crearSolicitud('eliminar_puesto', piso, id); modalGestion.style.display = 'none'; }
+                return;
+            }
 
-        const conf = await customDialog({ type: 'confirm', title: 'Peligro', message: 'Esta acción ELIMINARÁ permanentemente el espacio. ¿Continuar?', icon: '🗑️' });
-        if (conf) {
-            registrarMovimiento('Baja de Puesto', `Puesto ${id} (${dir}) dado de baja.`);
-            delete asignaciones[dir][id];
-            guardarDatos(); modalGestion.style.display = 'none'; renderDashboard();
-        }
-    });
+            const conf = await customDialog({ type: 'confirm', title: 'Peligro', message: 'Esta acción ELIMINARÁ permanentemente el espacio y reordenará los puestos. ¿Continuar?', icon: '🗑️' });
+            if (conf) {
+                registrarMovimiento('Baja de Puesto', `Puesto ${id} eliminado físicamente.`);
+                delete asignaciones[piso][id];
+                recalcularNumeracion(); 
+                modalGestion.style.display = 'none'; 
+                renderDashboard();
+            }
+        });
+    }
 
-    window.abrirModalNuevoPuesto = function(direccion) {
-        document.getElementById('nuevo-puesto-dir').value = direccion;
-        document.getElementById('nuevo-puesto-dir-display').value = direccion;
+    window.abrirModalNuevoPuesto = function(piso) {
+        document.getElementById('nuevo-puesto-dir').value = piso;
+        document.getElementById('nuevo-puesto-dir-display').value = `Piso ${piso}`;
         document.getElementById('nuevo-puesto-num').value = '';
         modalNuevoPuesto.style.display = 'block';
     }
 
     document.getElementById('form-nuevo-puesto').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const dir = document.getElementById('nuevo-puesto-dir').value;
+        const piso = document.getElementById('nuevo-puesto-dir').value;
         const nuevoNum = document.getElementById('nuevo-puesto-num').value.trim().toUpperCase();
 
-        if (asignaciones[dir][nuevoNum] !== undefined) {
+        if (asignaciones[piso][nuevoNum] !== undefined) {
             return await customDialog({ title: 'Conflicto', message: `El puesto "${nuevoNum}" ya existe.`, icon: '❌' });
         }
         
-        registrarMovimiento('Creación de Puesto', `Puesto ${nuevoNum} creado en ${dir} por ${currentUser.username}`);
-        asignaciones[dir][nuevoNum] = null;
-        guardarDatos(); modalNuevoPuesto.style.display = 'none'; renderDashboard();
+        registrarMovimiento('Creación de Puesto', `Puesto Extra ${nuevoNum} añadido en ${piso}`);
+        asignaciones[piso][nuevoNum] = null;
+        recalcularNumeracion(); 
+        modalNuevoPuesto.style.display = 'none'; 
+        renderDashboard();
     });
 
     document.getElementById('btn-add-dir').addEventListener('click', () => modalDir.style.display = 'block');
     document.getElementById('dir-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const newDir = document.getElementById('new-dir-name').value.trim();
-        if (newDir && !asignaciones[newDir]) {
-            registrarMovimiento('Creación de Unidad', `Registrada unidad: ${newDir}`);
-            asignaciones[newDir] = { "1": null, "2": null };
-            guardarDatos(); modalDir.style.display = 'none'; document.getElementById('dir-form').reset(); renderDashboard();
+        if (newDir && !bcvDepartamentos.includes(newDir)) {
+            registrarMovimiento('Creación de Unidad', `Registrado nuevo departamento: ${newDir}`);
+            bcvDepartamentos.push(newDir);
+            bcvDepartamentos.sort();
+            localStorage.setItem('bcvDepartamentosV10', JSON.stringify(bcvDepartamentos));
+            modalDir.style.display = 'none'; document.getElementById('dir-form').reset(); 
+            await customDialog({ title: 'Éxito', message: 'Dirección añadida al organigrama general.', icon: '✅' });
         } else { 
-            await customDialog({ title: 'Error', message: 'La dirección ya existe o el nombre es inválido.', icon: '❌' }); 
+            await customDialog({ title: 'Error', message: 'El departamento ya existe o el nombre es inválido.', icon: '❌' }); 
         }
     });
 
@@ -618,8 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendientes.forEach(s => {
                     const accionNombre = s.tipo.replace('_', ' ').toUpperCase();
                     html += `<li>
-                        <div>El analista <b style="color:var(--text-accent);">${s.analista}</b> solicita <b>${accionNombre}</b> en: <br>
-                        <i>${s.dir}</i> ${s.puesto ? `(Puesto: ${s.puesto})` : ''}</div>
+                        <div>El analista <b style="color:var(--text-accent);">${s.analista}</b> solicita <b>${accionNombre}</b> para el puesto <b>${s.puesto}</b></div>
                         <div class="solicitud-actions">
                             <button class="btn btn-sm btn-blue" onclick="resolverSolicitud(${s.id}, 'aprobar')">Aprobar ✔️</button>
                             <button class="btn btn-sm btn-outline-danger" onclick="resolverSolicitud(${s.id}, 'rechazar')">Rechazar ❌</button>
@@ -657,22 +674,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!sol) return;
 
         if (decision === 'aprobar') {
-            if (sol.tipo === 'eliminar_direccion' && asignaciones[sol.dir]) {
-                delete asignaciones[sol.dir];
-                registrarMovimiento('Eliminación Aprobada', `Dirección ${sol.dir} eliminada por admin (Solicitud originada por el analista: ${sol.analista})`);
-            } else if (sol.tipo === 'eliminar_puesto' && asignaciones[sol.dir] && asignaciones[sol.dir][sol.puesto] !== undefined) {
+            if (sol.tipo === 'eliminar_puesto' && asignaciones[sol.dir] && asignaciones[sol.dir][sol.puesto] !== undefined) {
                 delete asignaciones[sol.dir][sol.puesto];
-                registrarMovimiento('Baja Aprobada', `Puesto ${sol.puesto} de ${sol.dir} eliminado (Solicitud originada por el analista: ${sol.analista})`);
+                recalcularNumeracion(); 
+                registrarMovimiento('Baja Aprobada', `Puesto ${sol.puesto} eliminado (Sol. de ${sol.analista})`);
             } else if (sol.tipo === 'liberar_puesto' && asignaciones[sol.dir] && asignaciones[sol.dir][sol.puesto] !== undefined) {
                 asignaciones[sol.dir][sol.puesto] = null;
-                registrarMovimiento('Liberación Aprobada', `Puesto ${sol.puesto} liberado en ${sol.dir} (Solicitud originada por el analista: ${sol.analista})`);
+                registrarMovimiento('Liberación Aprobada', `Puesto ${sol.puesto} liberado (Sol. de ${sol.analista})`);
             }
-            enviarNotificacion(sol.analista, `✅ Tu solicitud para ${sol.tipo.replace('_', ' ')} en ${sol.dir} fue APROBADA.`);
-            guardarDatos();
+            enviarNotificacion(sol.analista, `✅ Tu solicitud para ${sol.tipo.replace('_', ' ')} en el puesto ${sol.puesto} fue APROBADA.`);
             renderDashboard();
         } else {
-            enviarNotificacion(sol.analista, `❌ Tu solicitud para ${sol.tipo.replace('_', ' ')} en ${sol.dir} fue RECHAZADA.`);
-            registrarMovimiento('Solicitud Rechazada', `El administrador rechazó la solicitud de ${sol.tipo.replace('_', ' ')} en ${sol.dir} enviada por el analista ${sol.analista}`);
+            enviarNotificacion(sol.analista, `❌ Tu solicitud para ${sol.tipo.replace('_', ' ')} en el puesto ${sol.puesto} fue RECHAZADA.`);
+            registrarMovimiento('Solicitud Rechazada', `Admin rechazó solicitud de ${sol.tipo.replace('_', ' ')} para ${sol.puesto}`);
         }
 
         sol.estado = decision === 'aprobar' ? 'aprobada' : 'rechazada';
@@ -838,7 +852,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <li><b>Gestión de Usuarios:</b> Puede crear, modificar y revocar el acceso de cualquier usuario.</li>
                     <li><b>Aprobaciones:</b> Recibe notificaciones (🔔) y es el único con capacidad de aprobar o rechazar las solicitudes enviadas por los analistas.</li>
                     <li><b>Auditoría:</b> Acceso exclusivo al Libro de Auditoría (Movimientos) del sistema para investigar cambios.</li>
-                    <li><b>Infraestructura:</b> Puede crear nuevas Direcciones/Unidades y forzar la eliminación de registros existentes mediante su clave de seguridad gerencial.</li>
+                    <li><b>Infraestructura:</b> Puede registrar nuevos departamentos al organigrama y forzar la eliminación física de registros. Tenga en cuenta que al eliminar un puesto, el motor de inteligencia artificial renumerará automáticamente el resto del edificio.</li>
                     <li><b>Reportes:</b> Exportación del reporte institucional de puestos ocupados en PDF.</li>
                 </ul>
             </div>`;
@@ -847,9 +861,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #004080;">
                 <h4 style="margin:0 0 10px 0; color:#002856;">A. Analista (Operador)</h4>
                 <ul style="font-size:12px; line-height:1.6; padding-left: 20px; margin:0;">
-                    <li><b>Asignaciones:</b> Puede asignar puestos libres a nuevos funcionarios, especificando el tipo de asignación (Fijo, Temporal, Por Horas).</li>
-                    <li><b>Apertura de Puestos:</b> Puede crear nuevos números o IDs de puestos dentro de direcciones ya existentes.</li>
-                    <li><b>Restricción de Borrado:</b> <i>No puede eliminar ni liberar puestos o direcciones directamente.</i> Al intentarlo, el sistema enviará una Solicitud formal que los Administradores evaluarán (Aprobar/Rechazar).</li>
+                    <li><b>Asignaciones:</b> Puede asignar puestos libres a nuevos funcionarios y adscribirlos a un departamento/dirección existente, especificando el tipo de asignación.</li>
+                    <li><b>Datos del Vehículo:</b> Al asignar un puesto, puede registrar opcionalmente la placa y marca del vehículo.</li>
+                    <li><b>Apertura de Puestos Extras:</b> Puede crear nuevos números de puestos adicionales en cualquier piso.</li>
+                    <li><b>Restricción de Borrado:</b> <i>No puede eliminar ni liberar puestos directamente.</i> Al intentarlo, el sistema enviará una Solicitud formal que los Administradores evaluarán (Aprobar/Rechazar).</li>
                     <li><b>Notificaciones:</b> Recibirá un aviso en la campanita superior (🔔) cuando su solicitud haya sido respondida por la gerencia.</li>
                     <li><b>Reportes:</b> Tiene habilitada la opción para descargar el documento general de puestos asignados.</li>
                 </ul>
@@ -859,8 +874,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="margin-bottom: 25px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #94a3b8;">
                 <h4 style="margin:0 0 10px 0; color:#002856;">A. Lector (Solo Visualización)</h4>
                 <ul style="font-size:12px; line-height:1.6; padding-left: 20px; margin:0;">
-                    <li><b>Consultas de Información:</b> Puede buscar, visualizar y explorar todas las direcciones y puestos actuales del sistema.</li>
-                    <li><b>Buscador Inteligente:</b> Herramienta disponible para ubicar rápidamente a un funcionario, unidad o número de puesto usando la barra superior.</li>
+                    <li><b>Consultas de Información:</b> Puede buscar, visualizar y explorar todos los pisos y puestos actuales del sistema.</li>
+                    <li><b>Buscador Inteligente:</b> Herramienta disponible para ubicar rápidamente a un funcionario, departamento, placa vehicular o identificador de puesto.</li>
                     <li><b>Reportes:</b> Tiene habilitada la opción de "Exportar Reporte" para generar los PDFs de ocupación general de la institución.</li>
                     <li><b>Limitaciones de Seguridad:</b> Todos los formularios, campos de texto y botones de edición/eliminación se encuentran bloqueados por defecto para prevenir alteraciones accidentales de la base de datos.</li>
                 </ul>
@@ -894,7 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modales.forEach(m => { if (e.target === m && m.id !== 'dialog-overlay' && m.id !== 'modal-welcome') m.style.display = 'none'; });
     };
 
-    function guardarDatos() { localStorage.setItem('bcvPuestosV9', JSON.stringify(asignaciones)); } 
+    function guardarDatos() { localStorage.setItem('bcvPuestosV12', JSON.stringify(asignaciones)); } 
     function obtenerFechaHoy() { return new Date().toISOString().split('T')[0]; }
     function formatearFecha(fechaStr) {
         if (!fechaStr) return '';
@@ -918,18 +933,18 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         let totalOcupados = 0;
         
-        for (const [dir, puestos] of Object.entries(asignaciones)) {
+        for (const [piso, puestos] of Object.entries(asignaciones)) {
             const puestosOcupados = Object.keys(puestos).filter(k => puestos[k] !== null).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
             if (puestosOcupados.length > 0) {
                 totalOcupados += puestosOcupados.length;
-                html += `<h4 style="background:#002856; color:#ffffff; padding:10px 12px; margin-top:25px; margin-bottom:0; font-size:13px; text-transform:uppercase;">${dir}</h4>`;
+                html += `<h4 style="background:#002856; color:#ffffff; padding:10px 12px; margin-top:25px; margin-bottom:0; font-size:13px; text-transform:uppercase;">PISO ${piso}</h4>`;
                 html += `<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:15px; color:#000000;">
                             <thead>
                                 <tr style="background:#eeeeee; text-align:left;">
-                                    <th style="border:1px solid #cccccc; padding:8px 12px; width:12%; color:#000000;">IDENTIFICADOR</th>
-                                    <th style="border:1px solid #cccccc; padding:8px 12px; width:45%; color:#000000;">FUNCIONARIO ASIGNADO</th>
+                                    <th style="border:1px solid #cccccc; padding:8px 12px; width:12%; color:#000000;">PUESTO</th>
+                                    <th style="border:1px solid #cccccc; padding:8px 12px; width:35%; color:#000000;">FUNCIONARIO / UNIDAD</th>
                                     <th style="border:1px solid #cccccc; padding:8px 12px; width:15%; color:#000000;">TIPO</th>
-                                    <th style="border:1px solid #cccccc; padding:8px 12px; width:28%; color:#000000;">CONDICIONES DE USO</th>
+                                    <th style="border:1px solid #cccccc; padding:8px 12px; width:38%; color:#000000;">CONDICIONES DE USO</th>
                                 </tr>
                             </thead>
                             <tbody>`;
@@ -939,9 +954,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (p.tipo === 'Fijo') tiempo = `Permanente (Ingreso: ${formatearFecha(p.inicio)})`;
                     else if (p.tipo === 'Temporal') tiempo = `Del ${formatearFecha(p.inicio)} al ${formatearFecha(p.fin)}`;
                     else if (p.tipo === 'Por Horas') tiempo = `${p.horas} Horas (Día: ${formatearFecha(p.inicio)})`;
+                    
+                    let vehiculoInfo = '';
+                    if (p.marca || p.placa) {
+                        vehiculoInfo = `<br><span style="font-size:9px; color:#002856;">🚗 ${p.marca || 'N/A'} | Placa: ${p.placa || 'N/A'}</span>`;
+                    }
+
                     html += `<tr>
                         <td style="border:1px solid #cccccc; padding:8px 12px; font-weight:bold; color:#000000; text-align:center;">${key}</td>
-                        <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;">${p.nombre}</td>
+                        <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;"><b>${p.nombre}</b><br><span style="font-size:9px; color:#555;">${p.departamento}</span>${vehiculoInfo}</td>
                         <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;">${p.tipo}</td>
                         <td style="border:1px solid #cccccc; padding:8px 12px; color:#000000;">${tiempo}</td>
                     </tr>`;
